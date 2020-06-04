@@ -1,0 +1,7 @@
+name: PotionMerger
+version: ${project.version}
+author: Techdoodle
+api-version: 1.13
+main: com.darkender.plugins.potionmerger.PotionMerger
+commands:
+  merge:
