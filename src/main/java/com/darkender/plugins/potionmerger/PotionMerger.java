@@ -2,6 +2,7 @@ package com.darkender.plugins.potionmerger;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Levelled;
@@ -17,18 +18,58 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class PotionMerger extends JavaPlugin implements Listener
 {
     private static final int MIN = 1200;
     private static NamespacedKey mergedPotionKey;
+    private Map<PotionEffectType, String> translatableNames;
     
     @Override
     public void onEnable()
     {
         mergedPotionKey = new NamespacedKey(this, "merged-potion");
         getServer().getPluginManager().registerEvents(this, this);
+        
+        // Now *this* is EPIC
+        translatableNames = new HashMap<>();
+        translatableNames.put(PotionEffectType.ABSORPTION, "effect.minecraft.absorption");
+        translatableNames.put(PotionEffectType.BAD_OMEN, "effect.minecraft.bad_omen");
+        translatableNames.put(PotionEffectType.BLINDNESS, "effect.minecraft.blindness");
+        translatableNames.put(PotionEffectType.CONDUIT_POWER, "effect.minecraft.conduit_power");
+        translatableNames.put(PotionEffectType.CONFUSION, "effect.minecraft.nausea");
+        translatableNames.put(PotionEffectType.DAMAGE_RESISTANCE, "effect.minecraft.resistance");
+        translatableNames.put(PotionEffectType.DOLPHINS_GRACE, "effect.minecraft.dolphins_grace");
+        translatableNames.put(PotionEffectType.FAST_DIGGING, "effect.minecraft.haste");
+        translatableNames.put(PotionEffectType.FIRE_RESISTANCE, "effect.minecraft.fire_resistance");
+        translatableNames.put(PotionEffectType.GLOWING, "effect.minecraft.glowing");
+        translatableNames.put(PotionEffectType.HARM, "effect.minecraft.instant_damage");
+        translatableNames.put(PotionEffectType.HEAL, "effect.minecraft.instant_health");
+        translatableNames.put(PotionEffectType.HEALTH_BOOST, "effect.minecraft.health_boost");
+        translatableNames.put(PotionEffectType.HERO_OF_THE_VILLAGE, "effect.minecraft.hero_of_the_village");
+        translatableNames.put(PotionEffectType.HUNGER, "effect.minecraft.hunger");
+        translatableNames.put(PotionEffectType.INCREASE_DAMAGE, "effect.minecraft.strength");
+        translatableNames.put(PotionEffectType.INVISIBILITY, "effect.minecraft.invisibility");
+        translatableNames.put(PotionEffectType.JUMP, "effect.minecraft.jump_boost");
+        translatableNames.put(PotionEffectType.LEVITATION, "effect.minecraft.levitation");
+        translatableNames.put(PotionEffectType.LUCK, "effect.minecraft.luck");
+        translatableNames.put(PotionEffectType.NIGHT_VISION, "effect.minecraft.night_vision");
+        translatableNames.put(PotionEffectType.POISON, "effect.minecraft.poison");
+        translatableNames.put(PotionEffectType.REGENERATION, "effect.minecraft.regeneration");
+        translatableNames.put(PotionEffectType.SATURATION, "effect.minecraft.saturation");
+        translatableNames.put(PotionEffectType.SLOW, "effect.minecraft.slowness");
+        translatableNames.put(PotionEffectType.SLOW_DIGGING, "effect.minecraft.mining_fatigue");
+        translatableNames.put(PotionEffectType.SLOW_FALLING, "effect.minecraft.slow_falling");
+        translatableNames.put(PotionEffectType.SPEED, "effect.minecraft.speed");
+        translatableNames.put(PotionEffectType.UNLUCK, "effect.minecraft.unluck");
+        translatableNames.put(PotionEffectType.WATER_BREATHING, "effect.minecraft.water_breathing");
+        translatableNames.put(PotionEffectType.WEAKNESS, "effect.minecraft.weakness");
+        translatableNames.put(PotionEffectType.WITHER, "effect.minecraft.wither");
+
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable()
         {
             @Override
@@ -46,12 +87,25 @@ public class PotionMerger extends JavaPlugin implements Listener
         if(item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(mergedPotionKey, PersistentDataType.BYTE))
         {
             PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
-            StringJoiner joiner = new StringJoiner(", ");
-            for(PotionEffect effect : potionMeta.getCustomEffects())
+            TextComponent base = new TextComponent("");
+            for(int i = 0; i < potionMeta.getCustomEffects().size(); i++)
             {
-                joiner.add(effect.getType().getName().toLowerCase().replaceAll("_", " "));
+                PotionEffect effect = potionMeta.getCustomEffects().get(i);
+                if(translatableNames.containsKey(effect.getType()))
+                {
+                    base.addExtra(new TranslatableComponent(translatableNames.get(effect.getType())));
+                }
+                else
+                {
+                    base.addExtra(new TextComponent(effect.getType().getName().toLowerCase().replaceAll("_", " ")));
+                }
+                
+                if(i != potionMeta.getCustomEffects().size() - 1)
+                {
+                    base.addExtra(new TextComponent(", "));
+                }
             }
-            event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(joiner.toString()));
+            event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, base);
         }
     }
     
