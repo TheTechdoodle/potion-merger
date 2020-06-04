@@ -101,7 +101,14 @@ public class PotionMerger extends JavaPlugin implements Listener
                         {
                             PotionMeta potionMeta = (PotionMeta) item.getItemStack().getItemMeta();
                             boolean equal = true;
-                            potionMeta.addCustomEffect(getPotionEffect(potionMeta), false);
+                            if(potionMeta.getBasePotionData().getType() != PotionType.UNCRAFTABLE)
+                            {
+                                PotionEffect base = getPotionEffect(potionMeta);
+                                if(base != null)
+                                {
+                                    potionMeta.addCustomEffect(base, false);
+                                }
+                            }
                             for(PotionEffect effect : potionMeta.getCustomEffects())
                             {
                                 if(merged.containsKey(effect.getType()))
