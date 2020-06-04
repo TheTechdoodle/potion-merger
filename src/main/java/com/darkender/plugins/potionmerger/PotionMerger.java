@@ -1,9 +1,14 @@
 package com.darkender.plugins.potionmerger;
 
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.entity.Item;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -12,12 +17,9 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class PotionMerger extends JavaPlugin
+public class PotionMerger extends JavaPlugin implements Listener
 {
     private static final int MIN = 1200;
     private static NamespacedKey mergedPotionKey;
@@ -26,6 +28,7 @@ public class PotionMerger extends JavaPlugin
     public void onEnable()
     {
         mergedPotionKey = new NamespacedKey(this, "merged-potion");
+        getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable()
         {
             @Override
@@ -34,6 +37,22 @@ public class PotionMerger extends JavaPlugin
                 checkPotions();
             }
         }, 0L, 5L);
+    }
+    
+    @EventHandler
+    public void onHandItem(PlayerItemHeldEvent event)
+    {
+        ItemStack item = event.getPlayer().getInventory().getItem(event.getNewSlot());
+        if(item != null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(mergedPotionKey, PersistentDataType.BYTE))
+        {
+            PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
+            StringJoiner joiner = new StringJoiner(", ");
+            for(PotionEffect effect : potionMeta.getCustomEffects())
+            {
+                joiner.add(effect.getType().getName().toLowerCase().replaceAll("_", " "));
+            }
+            event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(joiner.toString()));
+        }
     }
     
     private void checkPotions()
