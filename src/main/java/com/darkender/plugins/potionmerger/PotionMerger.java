@@ -152,7 +152,7 @@ public class PotionMerger extends JavaPlugin implements Listener
                         Location loc = cauldronBlock.getLocation().add(0.5, 0.5, 0.5);
                         cauldronBlock.getWorld().dropItem(loc, mergedItem);
                         cauldronBlock.getWorld().playSound(loc, Sound.BLOCK_BREWING_STAND_BREW, 1.0F, 1.0F);
-                        cauldronBlock.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, loc, 0);
+                        cauldronBlock.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, loc, 1);
                     }
                 }
             }
