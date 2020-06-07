@@ -16,12 +16,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.potion.PotionType;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PotionMerger extends JavaPlugin implements Listener
 {
@@ -155,15 +151,11 @@ public class PotionMerger extends JavaPlugin implements Listener
                         {
                             PotionMeta potionMeta = (PotionMeta) item.getItemStack().getItemMeta();
                             boolean equal = true;
-                            if(potionMeta.getBasePotionData().getType() != PotionType.UNCRAFTABLE)
-                            {
-                                PotionEffect base = getPotionEffect(potionMeta);
-                                if(base != null)
-                                {
-                                    potionMeta.addCustomEffect(base, false);
-                                }
-                            }
-                            for(PotionEffect effect : potionMeta.getCustomEffects())
+                            List<PotionEffect> effects = new ArrayList<>();
+                            effects.addAll(potionMeta.getCustomEffects());
+                            effects.addAll(PotionUtils.getEffectsFromBase(potionMeta.getBasePotionData()));
+                            
+                            for(PotionEffect effect : effects)
                             {
                                 if(merged.containsKey(effect.getType()))
                                 {
@@ -217,99 +209,5 @@ public class PotionMerger extends JavaPlugin implements Listener
     {
         return material == Material.SPLASH_POTION || material == Material.POTION ||
                material == Material.LINGERING_POTION || material == Material.TIPPED_ARROW;
-    }
-    
-    // From https://www.spigotmc.org/threads/how-to-get-the-exact-potion-effect-a-potion-item-will-give-off-in-the-playerconsumeitemevent.410806/#post-3645238
-    private PotionEffect getPotionEffect(PotionMeta pm)
-    {
-        PotionType pt = pm.getBasePotionData().getType();
-        PotionEffectType pet = pt.getEffectType();
-        boolean extended = pm.getBasePotionData().isExtended();
-        boolean upgraded = pm.getBasePotionData().isUpgraded();
-        boolean irregular = this.isIrregular(pet);
-        boolean negative = this.isNegative(pet);
-        
-        
-        if(!extended && !upgraded && !irregular)
-        {
-            return negative ? new PotionEffect(pet, (int) (MIN * 1.5), 0) : new PotionEffect(pet, MIN * 3, 0);
-        }
-        else if(!extended && upgraded && !irregular)
-        {
-            return negative ? new PotionEffect(pet, 400, 3) : new PotionEffect(pet, (int) (MIN * 1.5D), 1); // hard code slowness 4 in because its the only negative semi-irregular potion effect
-        }
-        else if(extended && !upgraded && !irregular)
-        {
-            return negative ? new PotionEffect(pet, MIN * 4, 0) : new PotionEffect(pet, MIN * 8, 0);
-        }
-        else if(pt.equals(PotionType.REGEN) || pt.equals(PotionType.POISON))
-        {
-            return extended ? new PotionEffect(pet, (int) (MIN * 1.5), 0) : upgraded ? negative ? new PotionEffect(pet, (int) (21.6 * 20), 1) : new PotionEffect(pet, 22 * 20, 1) : new PotionEffect(pet, 45 * 20, 0);
-        }
-        else if(pt.equals(PotionType.INSTANT_DAMAGE) || pt.equals(PotionType.INSTANT_HEAL))
-        {
-            return upgraded ? new PotionEffect(pet, 1, 1) : new PotionEffect(pet, 1, 0);
-        }
-        else if(pt.equals(PotionType.LUCK))
-        {
-            return new PotionEffect(pet, 5 * MIN, 0);
-        }
-        else if(pt.equals(PotionType.TURTLE_MASTER))
-        {
-            return null; // make sure in your method you do something about this. Since turtle master gives two potion effects, you have to handle this outside of this method.
-            // nah
-        }
-        
-        return new PotionEffect(pet, MIN, 0);
-    }
-    
-    
-    private boolean isNegative(PotionEffectType pet)
-    {
-        for(PotionType type : this.getNegativePotions())
-        {
-            if(type.getEffectType().equals(pet)) return true;
-        }
-        return false;
-    }
-    
-    
-    private PotionType[] getNegativePotions()
-    {
-        PotionType[] list = {PotionType.INSTANT_DAMAGE, PotionType.POISON, PotionType.SLOWNESS, PotionType.WEAKNESS, PotionType.SLOW_FALLING}; // Slow falling is not a negative put has stats effects simular to a negative potion.
-        return list;
-    }
-    
-    
-    private boolean isIrregular(PotionEffectType pet)
-    {
-        
-        for(PotionType type : this.getIrregularPotions())
-        {
-            if(type.getEffectType().equals(pet)) return true;
-        }
-        
-        return false;
-    }
-    
-    private PotionType[] getIrregularPotions()
-    {
-        PotionType[] list = {PotionType.REGEN, PotionType.LUCK, PotionType.POISON, PotionType.TURTLE_MASTER, PotionType.INSTANT_DAMAGE, PotionType.INSTANT_HEAL};
-        return list;
-    }
-    
-    private boolean isUnusable(PotionType type)
-    {
-        for(PotionType pt : this.getUnusable())
-        {
-            if(pt.equals(type)) return true;
-        }
-        return false;
-    }
-    
-    private PotionType[] getUnusable()
-    {
-        PotionType[] list = {PotionType.AWKWARD, PotionType.WATER, PotionType.THICK, PotionType.MUNDANE, PotionType.UNCRAFTABLE};
-        return list;
     }
 }
